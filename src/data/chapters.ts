@@ -1939,6 +1939,451 @@ export const CHAPTERS: Chapter[] = [
           { speakerId: 'dyrektorka', text: 'Od dziś Tęczowy Zakątek będzie uczył zarówno radosnej kreacji, jak i wzajemnego szacunku. Jesteśmy wolni i zjednoczeni!' },
           { speakerId: 'system', text: 'GRATULACJE! UKOŃCZYŁEŚ PEŁNĄ KAMPANIĘ GRY KOLORYDUSZEK!' }
         ],
+        choices: [
+          {
+            id: 'ch23_to_ch24',
+            text: 'Rozpocznij Akt II: Nowy Cień...',
+            impactFreedom: 0,
+            impactOrder: 0,
+            nextSceneId: 'ch24_intro'
+          }
+        ]
+      }
+    }
+  },
+  {
+    id: 24,
+    title: 'Rozdział 24: Spokój przed burzą',
+    summary: 'Po wydarzeniach w sali gimnastycznej atmosfera wyraźnie się uspokaja. Dyrektorka wprowadza zmiany, personel znów rozmawia, ale terapeutki zaczynają zapraszać pojedynczych pracowników na osobiste spotkania.',
+    startSceneId: 'ch24_intro',
+    scenes: {
+      ch24_intro: {
+        id: 'ch24_intro',
+        title: 'Złudny Pokój',
+        backgroundUrl: '/assets/images/kindergarten_garden_1783451914603.jpg',
+        dialogue: [
+          { speakerId: 'player', text: 'Wszystko wydaje się wracać do normy. Nauczycielki i terapeutki rozmawiają ze sobą na korytarzu z prawdziwym uśmiechem.' },
+          { speakerId: 'basia', text: 'Asystentko! Nie do wiary, ale dyrektorka zatwierdziła nasz nowy kreatywny ogródek! Pracujemy spokojnie pierwszy raz od wielu tygodni.' },
+          { speakerId: 'dyrektorka', text: 'Wprowadzamy spore zmiany organizacyjne, by nikt więcej nie czuł się wykluczony. Tęczowy Zakątek odzyskał równowagę.' }
+        ],
+        choices: [
+          {
+            id: 'ch24_c1_teachers',
+            text: 'Pogawędź serdecznie z nauczycielkami i zaplanujcie nowe zabawy (Wolność).',
+            impactFreedom: 15,
+            impactOrder: -5,
+            nextSceneId: 'ch24_signals'
+          },
+          {
+            id: 'ch24_c1_order',
+            text: 'Zrób krótki obchód korytarza, sprawdzając czystość i regulamin sal (Uporządkowanie).',
+            impactFreedom: -5,
+            impactOrder: 15,
+            nextSceneId: 'ch24_signals'
+          }
+        ]
+      },
+      ch24_signals: {
+        id: 'ch24_signals',
+        title: 'Sygnały w mroku',
+        backgroundUrl: '/assets/images/dark_kinder_bg_1783533364360.jpg',
+        dialogue: [
+          { speakerId: 'system', text: 'Twoje zaufanie zostaje zachwiane. Zauważasz, że jedna z terapeutek, Pani Whisper, coraz częściej zaprasza pojedynczych pracowników do gabinetu.' },
+          { speakerId: 'whisper', text: 'Janek, czy mógłbyś wejść na moment do mojego gabinetu? Chciałabym omówić z tobą pewne prywatne, służbowe sprawy w cztery oczy...' },
+          { speakerId: 'kucharz', text: 'Eee... no dobrze, pani Whisper. Już idę.' },
+          { speakerId: 'system', text: 'Drzwi gabinetu zamykają się z cichym, złowrogim kliknięciem.' }
+        ],
+        choices: [
+          {
+            id: 'ch24_c2_spy',
+            text: 'Zbliż się cicho do drzwi i spróbuj podsłuchać rozmowę (Wolność).',
+            impactFreedom: 10,
+            impactOrder: 0,
+            nextSceneId: 'ch24_withdrawn'
+          },
+          {
+            id: 'ch24_c2_wait',
+            text: 'Czekaj cierpliwie na korytarzu, nie wzbudzając podejrzeń (Uporządkowanie).',
+            impactFreedom: 0,
+            impactOrder: 10,
+            nextSceneId: 'ch24_withdrawn'
+          }
+        ]
+      },
+      ch24_withdrawn: {
+        id: 'ch24_withdrawn',
+        title: 'Zmieniona Twarz',
+        backgroundUrl: '/assets/images/dark_kinder_bg_1783533364360.jpg',
+        dialogue: [
+          { speakerId: 'system', text: 'Po bardzo długiej rozmowie drzwi gabinetu otwierają się i wychodzi z nich Pan Kucharz Janek.' },
+          { speakerId: 'player', text: 'Panie Janku! Wszystko w porządku? O czym rozmawialiście z terapeutką?' },
+          { speakerId: 'kucharz', text: 'Tak, tak... w porządku. Bezpieczeństwo higieniczne jest po prostu... najważniejsze. Musimy przestrzegać zasad.' },
+          { speakerId: 'system', text: 'Janek jest wycofany, unika Twojego wzroku i spieszy się do kuchni, odmawiając jakichkolwiek dalszych wyjaśnień.' }
+        ],
+        choices: [
+          {
+            id: 'ch24_to_ch25',
+            text: 'Rozpocznij Rozdział 25: Dziwne zmiany',
+            impactFreedom: 0,
+            impactOrder: 0,
+            nextSceneId: 'ch25_intro'
+          }
+        ]
+      }
+    }
+  },
+  {
+    id: 25,
+    title: 'Rozdział 25: Dziwne zmiany',
+    summary: 'Kolejni pracownicy przedszkola zaczynają zmieniać zachowanie i wycofywać swoje poparcie dla nauczycielek, twierdząc, że wcześniej „przesadzali”.',
+    startSceneId: 'ch25_intro',
+    scenes: {
+      ch25_intro: {
+        id: 'ch25_intro',
+        title: 'Spadek Zaufania',
+        backgroundUrl: '/assets/images/teachers_trio_1783451887451.jpg',
+        dialogue: [
+          { speakerId: 'player', text: 'Wchodzę do pokoju nauczycielskiego. Pani Amelia, która zawsze była duszą towarzystwa, siedzi ponuro w kącie.' },
+          { speakerId: 'player', text: 'Amelio, pomożesz nam przygotować wielki plakat z tęczą dla grupy maluchów?' },
+          { speakerId: 'amelia', text: 'Ja... chyba nie powinnam. Wiesz, chyba przesadzaliśmy z tą całą wolnością. Metody terapeutek chronią dzieci przed chaosem.' },
+          { speakerId: 'basia', text: 'Co ty mówisz, Amelio?! Przecież jeszcze wczoraj śpiewałaś z nami piosenki!' }
+        ],
+        choices: [
+          {
+            id: 'ch25_c1_convince',
+            text: 'Przekonuj Amelię, przypominając jej radość dzieci na zajęciach (Wolność).',
+            impactFreedom: 15,
+            impactOrder: -5,
+            nextSceneId: 'ch25_whispers'
+          },
+          {
+            id: 'ch25_c1_accept',
+            text: 'Zaakceptuj jej słowa i zapytaj, jakie konkretne reguły uważa za słuszne (Uporządkowanie).',
+            impactFreedom: -5,
+            impactOrder: 15,
+            nextSceneId: 'ch25_whispers'
+          }
+        ]
+      },
+      ch25_whispers: {
+        id: 'ch25_whispers',
+        title: 'Gęstniejące Szepty',
+        backgroundUrl: '/assets/images/dark_kinder_bg_1783533364360.jpg',
+        dialogue: [
+          { speakerId: 'system', text: 'Nowe, niepokojące plotki zaczynają krążyć po przedszkolu, ale nikt nie jest w stanie wskazać ich bezpośredniego źródła.' },
+          { speakerId: 'basia', text: 'Ktoś rozpowiada rodzicom, że nasze kreatywne zajęcia wywołują u dzieci nadpobudliwość. To absurd!' },
+          { speakerId: 'player', text: 'Spójrzcie, terapeutki znów zbierają się za zamkniętymi drzwiami gabinetu Calm.' }
+        ],
+        choices: [
+          {
+            id: 'ch25_to_ch26',
+            text: 'Rozpocznij Rozdział 26: Gabinet',
+            impactFreedom: 0,
+            impactOrder: 0,
+            nextSceneId: 'ch26_intro'
+          }
+        ]
+      }
+    }
+  },
+  {
+    id: 26,
+    title: 'Rozdział 26: Gabinet',
+    summary: 'Śledzisz kolejną ofiarę wchodzącą do gabinetu terapeutycznego i zdobywasz przerażające, ukryte przesłanie ostrzegawcze.',
+    startSceneId: 'ch26_intro',
+    scenes: {
+      ch26_intro: {
+        id: 'ch26_intro',
+        title: 'Świadek Przemiany',
+        backgroundUrl: '/assets/images/dark_kinder_bg_1783533364360.jpg',
+        dialogue: [
+          { speakerId: 'system', text: 'Przechodzisz korytarzem i zauważasz w-fistę Roberta wchodzącego do gabinetu Pani Whisper. Rozmowa ciągnie się godzinami.' },
+          { speakerId: 'player', text: 'Robert zawsze głośno walczył o sport i swobodę dzieci. Co oni z nim robią za tymi zamkniętymi drzwiami?' }
+        ],
+        choices: [
+          {
+            id: 'ch26_c1_record',
+            text: 'Wyciągnij smartfon i spróbuj nagrać dyktat rozmowy przez szparę w drzwiach (Wolność).',
+            impactFreedom: 15,
+            impactOrder: -5,
+            nextSceneId: 'ch26_lost'
+          },
+          {
+            id: 'ch26_c1_note',
+            text: 'Notuj godziny wejść i wyjść pracowników jako dowód proceduralny (Uporządkowanie).',
+            impactFreedom: -5,
+            impactOrder: 15,
+            nextSceneId: 'ch26_lost'
+          }
+        ]
+      },
+      ch26_lost: {
+        id: 'ch26_lost',
+        title: 'Nie Idź Tam Sam',
+        backgroundUrl: '/assets/images/dark_kinder_bg_1783533364360.jpg',
+        dialogue: [
+          { speakerId: 'system', text: 'Drzwi otwierają się. Robert wychodzi z gabinetu z mętnym wzrokiem i dziwnie spokojnym, monotonnym krokiem.' },
+          { speakerId: 'robert', text: 'Wychowanie fizyczne musi opierać się wyłącznie na symetrycznych ćwiczeniach rygorystycznych. Radosny ruch bez schematów to niepotrzebny chaos...' },
+          { speakerId: 'milena', text: 'Asystentko... Słyszałaś go? Wśród kadry zaczyna krążyć jedno kluczowe ostrzeżenie: Nie idź z nimi sam do gabinetu.' }
+        ],
+        choices: [
+          {
+            id: 'ch26_c2_search',
+            text: 'Przeszukaj korytarz wokół szafek w poszukiwaniu ukrytych śladów.',
+            impactFreedom: 0,
+            impactOrder: 0,
+            nextSceneId: 'ch26_note'
+          }
+        ]
+      },
+      ch26_note: {
+        id: 'ch26_note',
+        title: 'Odnaleziona Prawda',
+        backgroundUrl: '/assets/images/dark_kinder_bg_1783533364360.jpg',
+        dialogue: [
+          { speakerId: 'system', text: 'Pod szafką Roberta zauważasz mały, porzucony i pognieciony skrawek papieru. Podnosisz go pośpiesznie i czytasz jedno zdanie:' },
+          { speakerId: 'player', text: '„Najpierw izolują. Potem przekonują.”' },
+          { speakerId: 'system', text: 'Twoje serce bije szybciej. To nie są zwykłe spotkania kadrowe – to systematyczna presja i psychologiczna manipulacja!' }
+        ],
+        choices: [
+          {
+            id: 'ch26_to_ch27',
+            text: 'Rozpocznij Rozdział 27: Nowa liderka',
+            impactFreedom: 0,
+            impactOrder: 0,
+            nextSceneId: 'ch27_intro'
+          }
+        ]
+      }
+    }
+  },
+  {
+    id: 27,
+    title: 'Rozdział 27: Nowa liderka',
+    summary: 'Odkrywasz, że dotychczas milcząca terapeutka przejmuje inicjatywę i buduje własną siłę wpływu opartą na powiązaniach z byłym Kierownikiem.',
+    startSceneId: 'ch27_intro',
+    scenes: {
+      ch27_intro: {
+        id: 'ch27_intro',
+        title: 'Cień Wyłania się na Scenę',
+        backgroundUrl: '/assets/images/therapists_trio_1783451898546.jpg',
+        dialogue: [
+          { speakerId: 'system', text: 'Podkradasz się pod gabinet konferencyjny. Nowa postać, terapeutka Małgorzata, przemawia niezwykle pewnym siebie, chłodnym głosem.' },
+          { speakerId: 'shadow_therapist', text: 'Łysy Kierownik przegrał, bo był zbyt tchórzliwy i ostrożny. Próbował bawić się w podchody techniczne. Ja nie popełnię tego samego błędu.' },
+          { speakerId: 'whisper', text: 'Zgadzam się, Małgorzato. Twoja determinacja imponuje nam o wiele bardziej niż wahanie Calm.' }
+        ],
+        choices: [
+          {
+            id: 'ch27_c1_photo',
+            text: 'Zrób ukradkiem zdjęcie Małgorzacie z jej dokumentami, by mieć dowód (Wolność).',
+            impactFreedom: 15,
+            impactOrder: -5,
+            nextSceneId: 'ch27_revelation'
+          },
+          {
+            id: 'ch27_c1_log',
+            text: 'Zapisz szczegóły jej taktyki i słów w pamięci służbowej (Uporządkowanie).',
+            impactFreedom: -5,
+            impactOrder: 15,
+            nextSceneId: 'ch27_revelation'
+          }
+        ]
+      },
+      ch27_revelation: {
+        id: 'ch27_revelation',
+        title: 'Więzi z Przeszłością',
+        backgroundUrl: '/assets/images/therapists_trio_1783451898546.jpg',
+        dialogue: [
+          { speakerId: 'basia', text: 'Asystentko, dowiedziałam się czegoś strasznego! Małgorzata była bliską współpracowniczką, a nawet partnerką życiową Łysego Kierownika!' },
+          { speakerId: 'player', text: 'To wszystko wyjaśnia! Ona nie chce tylko pokoju, ona realizuje jego dziedzictwo z podwojoną bezwzględnością.' },
+          { speakerId: 'shadow_therapist', text: 'Tęczowy Zakątek zostanie zreorganizowany. Buduję własną, niezniszczalną sieć lojalności. Krok po kroku.' }
+        ],
+        choices: [
+          {
+            id: 'ch27_to_ch28',
+            text: 'Rozpocznij Rozdział 28: Podział',
+            impactFreedom: 0,
+            impactOrder: 0,
+            nextSceneId: 'ch28_intro'
+          }
+        ]
+      }
+    }
+  },
+  {
+    id: 28,
+    title: 'Rozdział 28: Podział',
+    summary: 'Atmosfera staje się skrajnie napięta. Korytarze przedszkola pustoszeją, a ludzie dzielą się na małe grupy, które milkną na Twój widok.',
+    startSceneId: 'ch28_intro',
+    scenes: {
+      ch28_intro: {
+        id: 'ch28_intro',
+        title: 'Szepty i Frakcje',
+        backgroundUrl: '/assets/images/dark_kinder_bg_1783533364360.jpg',
+        dialogue: [
+          { speakerId: 'system', text: 'Gdy tylko przechodzisz obok szafek, wszelkie rozmowy urywają się gwałtownie. Ludzie odwracają wzrok.' },
+          { speakerId: 'player', text: 'Zaczyna się głęboki podział kadry. Niektórzy panicznie boją się kontaktu z nauczycielkami, by nie podpaść Małgorzacie.' }
+        ],
+        choices: [
+          {
+            id: 'ch28_c1_teachers',
+            text: 'Zjednocz się z uciskanymi nauczycielkami, stawiając na otwarty bunt (Wolność).',
+            impactFreedom: 20,
+            impactOrder: -10,
+            nextSceneId: 'ch28_teachers_scene'
+          },
+          {
+            id: 'ch28_c1_therapists',
+            text: 'Spróbuj zbadać powody ludzi przechodzących na stronę terapeutek, by zachować ład (Uporządkowanie).',
+            impactFreedom: -10,
+            impactOrder: 20,
+            nextSceneId: 'ch28_therapists_scene'
+          }
+        ]
+      },
+      ch28_teachers_scene: {
+        id: 'ch28_teachers_scene',
+        title: 'Frakcja Wolności',
+        backgroundUrl: '/assets/images/teachers_trio_1783451887451.jpg',
+        dialogue: [
+          { speakerId: 'basia', text: 'Asystentko! Dobrze, że jesteś. Tracimy ludzi. Nawet Robert i Amelia przestają z nami rozmawiać. Jesteśmy spychane do defensywy.' },
+          { speakerId: 'player', text: 'Nie poddamy się. Strach to ich jedyna broń, ale my mamy prawdę i miłość dzieci.' }
+        ],
+        choices: [
+          {
+            id: 'ch28_finish_teachers',
+            text: 'Przejdź do kolejnego etapu podziału',
+            impactFreedom: 0,
+            impactOrder: 0,
+            nextSceneId: 'ch28_transition'
+          }
+        ]
+      },
+      ch28_therapists_scene: {
+        id: 'ch28_therapists_scene',
+        title: 'Frakcja Porządku',
+        backgroundUrl: '/assets/images/therapists_trio_1783451898546.jpg',
+        dialogue: [
+          { speakerId: 'kucharz', text: 'Asystentko... Małgorzata obiecuje nam stabilność zatrudnienia i pełną ochronę przed kontrolami. Może te procedury izolacji dają nam po prostu... święty spokój?' },
+          { speakerId: 'player', text: 'Spokój kupiony strachem i milczeniem to nie jest prawdziwe bezpieczeństwo.' }
+        ],
+        choices: [
+          {
+            id: 'ch28_finish_therapists',
+            text: 'Przejdź do kolejnego etapu podziału',
+            impactFreedom: 0,
+            impactOrder: 0,
+            nextSceneId: 'ch28_transition'
+          }
+        ]
+      },
+      ch28_transition: {
+        id: 'ch28_transition',
+        title: 'Cicha Wojna',
+        backgroundUrl: '/assets/images/dark_kinder_bg_1783533364360.jpg',
+        dialogue: [
+          { speakerId: 'system', text: 'Nienawiść i nieufność pęcznieją. Trudno odróżnić tych, którzy ulegli manipulacji, od tych, którzy jedynie próbują przetrwać.' }
+        ],
+        choices: [
+          {
+            id: 'ch28_to_ch29',
+            text: 'Rozpocznij Rozdział 29: Wpływ',
+            impactFreedom: 0,
+            impactOrder: 0,
+            nextSceneId: 'ch29_intro'
+          }
+        ]
+      }
+    }
+  },
+  {
+    id: 29,
+    title: 'Rozdział 29: Wpływ',
+    summary: 'Zdobywasz pierwsze twarde dowody na manipulacyjne instrukcje perswazyjne stosowane przez nową liderkę.',
+    startSceneId: 'ch29_intro',
+    scenes: {
+      ch29_intro: {
+        id: 'ch29_intro',
+        title: 'Dowody Manipulacji',
+        backgroundUrl: '/assets/images/dark_kinder_bg_1783533364360.jpg',
+        dialogue: [
+          { speakerId: 'player', text: 'Mam to! Znalazłam dokument o nazwie „Metodologia Perswazji Behawioralnej”. To podręcznik manipulacji terapeutek!' },
+          { speakerId: 'basia', text: 'Mój Boże... Oni rozpisali cały algorytm: jak izolować jednostki, jak siać wątpliwości i łamać charakter!' }
+        ],
+        choices: [
+          {
+            id: 'ch29_c1_expose',
+            text: 'Upowszechnij dokument i wywieś go na tablicy dla wszystkich pracowników (Wolność).',
+            impactFreedom: 20,
+            impactOrder: -10,
+            nextSceneId: 'ch29_paranoia'
+          },
+          {
+            id: 'ch29_c1_keep',
+            text: 'Zabezpiecz dokument i użyj go jako argumentu w poufnej rozmowie z Calm (Uporządkowanie).',
+            impactFreedom: -10,
+            impactOrder: 20,
+            nextSceneId: 'ch29_paranoia'
+          }
+        ]
+      },
+      ch29_paranoia: {
+        id: 'ch29_paranoia',
+        title: 'Kto Jest Kim?',
+        backgroundUrl: '/assets/images/dark_kinder_bg_1783533364360.jpg',
+        dialogue: [
+          { speakerId: 'system', text: 'Pracownicy zaczynają powtarzać identyczne, wyuczone argumenty w obronie „standardów porządku sensorycznego”.' },
+          { speakerId: 'player', text: 'To paranoja. Nie wiem już, kto rozmawia ze mną szczerze, a kto tylko recytuje narzucone formułki ze strachu przed Małgorzatą.' }
+        ],
+        choices: [
+          {
+            id: 'ch29_to_ch30',
+            text: 'Rozpocznij Rozdział 30: Nowy plan',
+            impactFreedom: 0,
+            impactOrder: 0,
+            nextSceneId: 'ch30_intro'
+          }
+        ]
+      }
+    }
+  },
+  {
+    id: 30,
+    title: 'Rozdział 30: Nowy plan',
+    summary: 'Łysy Kierownik odszedł, ale jego sieć i mroczne plany trwają. Małgorzata układa własny plan absolutnego przejęcia przedszkola.',
+    startSceneId: 'ch30_intro',
+    scenes: {
+      ch30_intro: {
+        id: 'ch30_intro',
+        title: 'Druga Faza Planu',
+        backgroundUrl: '/assets/images/control_center_1783531596202.jpg',
+        dialogue: [
+          { speakerId: 'system', text: 'Wpływy Łysego Kierownika przetrwały jego odejście. Pozostawił po sobie ukryte kontakty, bazy danych i tajne raporty, które Małgorzata rozwija po swojemu.' },
+          { speakerId: 'player', text: 'Zabezpieczyłam ślady. Ona nie chce jedynie kontynuować jego dzieła. Chce stworzyć całkowicie własny, przerażający porządek.' }
+        ],
+        choices: [
+          {
+            id: 'ch30_c1_cabinet',
+            text: 'Wejdź wieczorem do gabinetu Małgorzaty, by stawić czoła prawdzie.',
+            impactFreedom: 0,
+            impactOrder: 0,
+            nextSceneId: 'ch30_liderka_cabinet'
+          }
+        ]
+      },
+      ch30_liderka_cabinet: {
+        id: 'ch30_liderka_cabinet',
+        title: 'Rozpoczęcie Mojego Planu',
+        backgroundUrl: '/assets/images/dark_kinder_bg_1783533364360.jpg',
+        dialogue: [
+          { speakerId: 'system', text: 'Pani Małgorzata siedzi samotnie w półmroku gabinetu. Na jej biurku spoczywa zamknięta czarna teczka pozostawiona przez Łysego Kierownika.' },
+          { speakerId: 'system', text: 'Kobieta patrzy na teczkę z chłodną pogardą, po czym zdecydowanym ruchem odsuwa ją na sam skraj biurka.' },
+          { speakerId: 'shadow_therapist', text: 'To był jego plan. Za mało bezwzględny, oparty wyłącznie na technokratycznych procedurach... Zapomniał, jak łatwo złamać ludzką wolę od środka.' },
+          { speakerId: 'shadow_therapist', text: 'Teraz zaczyna się mój plan. I nikt – zwłaszcza ta mała asystentka – nie powstrzyma nadchodzącego cienia.' },
+          { speakerId: 'system', text: 'Kobieta uśmiecha się lodowato, a ekran powoli wygasza się do czerni.' },
+          { speakerId: 'system', text: 'CIĄG DALSZY NASTĄPI...' },
+          { speakerId: 'system', text: 'Akt II dopiero się rozpoczyna.' }
+        ],
         choices: []
       }
     }

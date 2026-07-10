@@ -209,6 +209,24 @@ export default function MainMenu({
                   Nauczycielki vs Terapeutki
                 </h2>
                 <div className="h-1 w-32 bg-gradient-to-r from-red-500 via-yellow-400 to-cyan-400 mx-auto rounded-full mt-4 shadow-[0_0_15px_rgba(252,211,77,0.5)]" />
+                
+                {/* Informacja o nowej aktualizacji - Rozdziały 24-30 przyklejona jak plaster po skosie */}
+                <div className="relative z-20 -mt-3 -rotate-[2.5deg] hover:rotate-0 transition-all duration-300 ease-out max-w-xs sm:max-w-sm mx-auto drop-shadow-[0_8px_16px_rgba(139,92,246,0.35)] select-none">
+                  {/* Jagged / tape edges */}
+                  <div className="absolute -left-1.5 top-0 bottom-0 w-2 bg-[#8b5cf6]/30" style={{ clipPath: 'polygon(100% 0, 0 25%, 100% 50%, 0 75%, 100% 100%)' }} />
+                  <div className="absolute -right-1.5 top-0 bottom-0 w-2 bg-[#8b5cf6]/30" style={{ clipPath: 'polygon(0 0, 100% 25%, 0 50%, 100% 75%, 0 100%)' }} />
+                  
+                  <div className="px-4 py-2 bg-gradient-to-r from-violet-600/90 via-fuchsia-600/85 to-indigo-700/90 border-y border-violet-400/50 backdrop-blur-sm shadow-inner flex flex-col items-center justify-center">
+                    <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono tracking-widest text-yellow-300 uppercase font-black drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                      <Sparkles className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
+                      <span>Nowość: Rozdziały 24 - 30</span>
+                    </div>
+                    <p className="text-[9px] sm:text-[10px] text-violet-100 font-bold mt-0.5 uppercase font-mono tracking-wider drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
+                      Akt II: Nowy cień już dostępny!
+                    </p>
+                  </div>
+                </div>
+
                 {isInstalled && (
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-mono font-bold tracking-wider uppercase mt-3 animate-pulse">
                     <Smartphone className="w-3.5 h-3.5" /> Aplikacja PWA aktywna
@@ -354,7 +372,8 @@ export default function MainMenu({
                   .filter((c) => c.id !== 'system' && c.id !== 'player')
                   .map((char) => {
                     const isNauczycielka = char.faction === 'NAUCZYCIELKI';
-                    const isUnlocked = playerProfile.unlockedTeachers.includes(char.id);
+                    const isTherapist = char.faction === 'TERAPEUTKI';
+                    const isUnlocked = char.requiredChapter <= gameState.currentChapterId || playerProfile.unlockedTeachers.includes(char.id);
                     return (
                       <button
                         key={char.id}
@@ -367,7 +386,9 @@ export default function MainMenu({
                             ? isUnlocked
                               ? isNauczycielka
                                 ? 'bg-amber-500/20 border-amber-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.2)]'
-                                : 'bg-cyan-500/20 border-cyan-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.2)]'
+                                : isTherapist
+                                  ? 'bg-red-500/20 border-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.2)]'
+                                  : 'bg-cyan-500/20 border-cyan-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.2)]'
                               : 'bg-rose-950/40 border-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.2)]'
                             : isUnlocked
                               ? 'bg-black/40 border-white/10 hover:border-white/20 text-slate-300'
@@ -378,7 +399,11 @@ export default function MainMenu({
                           <div className="flex items-center justify-between">
                             <span className="text-[9px] opacity-80 font-mono uppercase font-bold tracking-wider">
                               {isUnlocked
-                                ? isNauczycielka ? '🌼 Nauczycielka' : '🔷 Terapeutka'
+                                ? isNauczycielka 
+                                  ? '🌼 Protagonistka' 
+                                  : isTherapist 
+                                    ? '😈 Antagonistka' 
+                                    : '⚖️ Neutralna'
                                 : '🔒 Zablokowane'}
                             </span>
                           </div>
@@ -399,7 +424,9 @@ export default function MainMenu({
               <AnimatePresence mode="wait">
                 {selectedChar ? (() => {
                   const charData = CHARACTERS[selectedChar];
-                  const isUnlocked = playerProfile.unlockedTeachers.includes(selectedChar);
+                  const isNauczycielka = charData.faction === 'NAUCZYCIELKI';
+                  const isTherapist = charData.faction === 'TERAPEUTKI';
+                  const isUnlocked = charData.requiredChapter <= gameState.currentChapterId || playerProfile.unlockedTeachers.includes(selectedChar);
 
                   if (!isUnlocked) {
                     return (
@@ -416,14 +443,14 @@ export default function MainMenu({
                         </div>
                         <div className="space-y-1">
                           <h4 className="text-sm font-black text-rose-400 uppercase tracking-widest font-mono flex items-center justify-center md:justify-start gap-1.5">
-                            <span>⚠️ DOSTĘP ZABRONIONY • SZYFROWANE AKTA</span>
+                            <span>⚠️ DOSTĘP ZABRONIONY • SZYFROWANE AKTA OSOBOWE</span>
                           </h4>
                           <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                            Profil psychologiczny, historia oraz unikalne zdolności tej postaci są tymczasowo zablokowane. 
-                            Poznaj tę postać bezpośrednio w trakcie przechodzenia wątku głównego.
+                            Profil tej postaci, jej historia, plany fabularne oraz unikalne cechy są utajnione.
+                            Musisz najpierw napotkać tę postać w wątku głównym gry.
                           </p>
                           <div className="text-xs text-amber-200/80 font-mono pt-1">
-                            💡 Wymagany postęp: <span className="font-bold text-amber-400">Rozdział {charData.requiredChapter}</span> (lub wyższy).
+                            💡 Wymagany postęp fabularny: <span className="font-bold text-amber-400">Rozdział {charData.requiredChapter}</span> (lub wyższy).
                           </div>
                         </div>
                       </motion.div>
@@ -448,25 +475,38 @@ export default function MainMenu({
                       </div>
 
                       <div className="md:col-span-2 space-y-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="text-lg font-black" style={{ color: charData.accentColor }}>
                             {charData.name}
                           </h4>
                           <span className="text-[10px] uppercase tracking-wider bg-white/15 px-2 py-0.5 rounded-full border border-white/5 text-slate-300 font-bold">
                             {charData.role}
                           </span>
+                          <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                            isNauczycielka 
+                              ? 'bg-amber-500/20 border-amber-500/30 text-amber-300' 
+                              : isTherapist 
+                                ? 'bg-red-500/20 border-red-500/30 text-red-300 animate-pulse' 
+                                : 'bg-cyan-500/20 border-cyan-500/30 text-cyan-300'
+                          }`}>
+                            {isNauczycielka 
+                              ? '🌼 PROTAGONISTKA (Nauczycielka)' 
+                              : isTherapist 
+                                ? '😈 ANTAGONISTKA (Terapeutka)' 
+                                : '⚖️ NEUTRALNA / MANIPULOWANA'}
+                          </span>
                         </div>
-                        <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                        <p className="text-xs text-slate-200 leading-relaxed font-semibold">
                           {charData.description}
                         </p>
-                        <div className="border-t border-white/10 pt-2 text-[11px] text-slate-400 leading-relaxed">
-                          <span className="font-black uppercase font-mono tracking-wider text-[10px] text-slate-500">
-                            Profil ideowy:
-                          </span>{' '}
+                        <div className="border-t border-white/10 pt-2 text-[11px] text-slate-300 leading-relaxed font-medium">
+                          <span className="font-black uppercase font-mono tracking-wider text-[10px] text-slate-500 block mb-0.5">
+                            Rola w intrydze i rys fabularny:
+                          </span>
                           {charData.history}
                         </div>
                         <div className="flex gap-2 pt-1.5 flex-wrap">
-                          {charData.abilities.map((ab) => (
+                          {charData.abilities && charData.abilities.length > 0 && charData.abilities.map((ab) => (
                             <span key={ab} className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-white/10 border border-white/5 text-amber-300">
                               ✨ {ab}
                             </span>

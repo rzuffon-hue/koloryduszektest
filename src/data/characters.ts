@@ -202,6 +202,19 @@ export const CHARACTERS: { [id: string]: Character } = {
     winPhrase: 'Wszystkie wasze sekrety należą do mnie.',
     requiredChapter: 15
   },
+  husband: {
+    id: 'husband',
+    name: 'Mąż Tomek',
+    faction: 'NEUTRAL',
+    role: 'Wspierający Mąż',
+    description: 'Twój mąż, który cierpliwie słucha opowieści o zmaganiach w przedszkolu i zawsze służy mądrą, pragmatyczną radą.',
+    portraitUrl: '/assets/images/husband_portrait_1783673184069.jpg',
+    accentColor: '#38bdf8',
+    secondaryColor: '#0284c7',
+    abilities: ['Ciepła Herbata', 'Zdrowy Rozsądek', 'Cierpliwe Słuchanie'],
+    history: 'Wieczorami w domu parzy pyszną herbatę i pomaga Ci poukładać myśli po burzliwych dniach w Tęczowym Zakątku. Pragmatyk, który bardzo Cię kocha.',
+    winPhrase: 'Zawsze jestem po Twojej stronie, kochanie.'
+  },
   player: {
     id: 'player',
     name: 'Asystentka (Ty)',
@@ -215,5 +228,19 @@ export const CHARACTERS: { [id: string]: Character } = {
     history: 'Zaczynasz swój pierwszy dzień pracy w tym na pozór uroczym przedszkolu. Szybko orientujesz się, że pod piosenkami kryje się walka o wpływy.',
     winPhrase: 'To była moja świadoma decyzja o losie dzieci!',
     requiredChapter: 1
+  },
+  shadow_therapist: {
+    id: 'shadow_therapist',
+    name: 'Pani Małgorzata',
+    faction: 'TERAPEUTKI',
+    role: 'Nowy Cień / Nowa Liderka',
+    description: 'Chłodna, wyrachowana terapeutka, która dotąd milczała w cieniu Pani Calm. Odkrywa karty po upadku Kierownika, z którym łączyła ją bliska przeszłość.',
+    portraitUrl: '/assets/images/malgorzata_portrait_1783676560366.jpg',
+    accentColor: '#8b5cf6',
+    secondaryColor: '#1e1b4b',
+    abilities: ['Izolacja Kontrolowana', 'Szept Hipnotyzujący', 'Zasłona Milczenia'],
+    history: 'Wspólnie z Łysym Kierownikiem współtworzyła pierwotne założenia programowe Zakonu Porządku. Po jego upadku przejmuje przywództwo nad pozostałymi terapeutkami, zdeterminowana, by dokończyć ich misję.',
+    winPhrase: 'To dopiero początek mojego porządku.',
+    requiredChapter: 24
   }
 };

@@ -17,12 +17,51 @@ import AnimatedPortrait from './AnimatedPortrait';
 import DiamondAttack from './DiamondAttack';
 import PhoneModal from './PhoneModal';
 import { Smartphone } from 'lucide-react';
+import HomeIntermission from './HomeIntermission';
 
 interface StoryScreenProps {
   gameState: GameState;
   onUpdateState: (updated: Partial<GameState>) => void;
   onExitToMenu: () => void;
   playerProfile: PlayerProfile;
+}
+
+function getPhoneUnreadCount(gameState: GameState): number {
+  let unreadCount = 0;
+  
+  // Anonim messages (Chapter 21+)
+  if (gameState.currentChapterId >= 21) {
+    const totalMsgs = 3;
+    const readCountStr = localStorage.getItem('phone_read_chat_anonim');
+    if (!readCountStr) {
+      unreadCount++;
+    } else {
+      const readCount = parseInt(readCountStr, 10);
+      if (totalMsgs > readCount) {
+        unreadCount++;
+      }
+    }
+  }
+
+  // Call history list size depends on chapter
+  let totalCalls = 2;
+  if (gameState.currentChapterId >= 6) totalCalls++;
+  if (gameState.currentChapterId >= 11) totalCalls++;
+  if (gameState.currentChapterId >= 12) totalCalls++;
+  if (gameState.currentChapterId >= 15) totalCalls++;
+  if (gameState.currentChapterId >= 21) totalCalls += 3;
+
+  const readCallsStr = localStorage.getItem('phone_read_calls_count');
+  if (!readCallsStr) {
+    unreadCount += (totalCalls > 0 ? 1 : 0);
+  } else {
+    const readCallsCount = parseInt(readCallsStr, 10);
+    if (totalCalls > readCallsCount) {
+      unreadCount++;
+    }
+  }
+
+  return unreadCount;
 }
 
 export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, playerProfile }: StoryScreenProps) {
@@ -35,6 +74,9 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
   const [isMuted, setIsMuted] = useState(sound.getMuted());
   const [showNotification, setShowNotification] = useState<string | null>(null);
   const [isPhoneOpen, setIsPhoneOpen] = useState(false);
+  const [unreadPhoneNotifications, setUnreadPhoneNotifications] = useState(0);
+  const [intermissionChapter, setIntermissionChapter] = useState<number | null>(null);
+  const [pendingNextState, setPendingNextState] = useState<{ id: number; sceneId: string } | null>(null);
 
   // Synchronously reset dialogue when scene ID changes to prevent stale dialogue indices
   const [prevSceneId, setPrevSceneId] = useState(gameState.currentSceneId);
@@ -69,6 +111,19 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
       return () => clearTimeout(timer);
     }
   }, [gameState.orderScore, prevOrder]);
+
+  // Update phone notification unread counts dynamically
+  const updateUnreadCount = () => {
+    setUnreadPhoneNotifications(getPhoneUnreadCount(gameState));
+  };
+
+  useEffect(() => {
+    updateUnreadCount();
+    window.addEventListener('storage', updateUnreadCount);
+    return () => {
+      window.removeEventListener('storage', updateUnreadCount);
+    };
+  }, [gameState.currentChapterId, gameState.decisions, isPhoneOpen]);
 
   // Background music control based on scene context
   useEffect(() => {
@@ -242,15 +297,27 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
       setTimeout(() => setShowNotification(null), 4000);
     }
 
-    onUpdateState({
-      currentChapterId: nextChapterId,
-      currentSceneId: nextScene,
-      freedomScore: newFreedom,
-      orderScore: newOrder,
-      playerFactionChoice: newFaction,
-      inventory: nextInventory,
-      decisions: nextDecisions
-    });
+    if (nextChapterId > gameState.currentChapterId) {
+      setIntermissionChapter(gameState.currentChapterId);
+      setPendingNextState({ id: nextChapterId, sceneId: nextScene });
+      onUpdateState({
+        freedomScore: newFreedom,
+        orderScore: newOrder,
+        playerFactionChoice: newFaction,
+        inventory: nextInventory,
+        decisions: nextDecisions
+      });
+    } else {
+      onUpdateState({
+        currentChapterId: nextChapterId,
+        currentSceneId: nextScene,
+        freedomScore: newFreedom,
+        orderScore: newOrder,
+        playerFactionChoice: newFaction,
+        inventory: nextInventory,
+        decisions: nextDecisions
+      });
+    }
   };
 
   const handleMinigameWin = (freedomBonus: number, orderBonus: number) => {
@@ -264,22 +331,65 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
       updatedCompleted.push(scene.minigameType);
     }
 
-    onUpdateState({
-      freedomScore: newFreedom,
-      orderScore: newOrder,
-      completedMinigames: updatedCompleted,
-      currentSceneId: scene.nextSceneIdOnMinigameWin || scene.id
-    });
+    let nextScene = scene.nextSceneIdOnMinigameWin || scene.id;
+    let nextChapterId = gameState.currentChapterId;
+
+    const match = nextScene.match(/^ch([0-9]+)_/);
+    if (match) {
+      const sceneChapterNum = parseInt(match[1], 10);
+      if (sceneChapterNum > gameState.currentChapterId) {
+        nextChapterId = sceneChapterNum;
+      }
+    }
+
+    if (nextChapterId > gameState.currentChapterId) {
+      setIntermissionChapter(gameState.currentChapterId);
+      setPendingNextState({ id: nextChapterId, sceneId: nextScene });
+      onUpdateState({
+        freedomScore: newFreedom,
+        orderScore: newOrder,
+        completedMinigames: updatedCompleted
+      });
+    } else {
+      onUpdateState({
+        freedomScore: newFreedom,
+        orderScore: newOrder,
+        completedMinigames: updatedCompleted,
+        currentSceneId: nextScene
+      });
+    }
   };
 
   const handleMinigameLose = () => {
     setActiveMinigame(null);
-    // Proceed anyway as fallback so the player is never stuck, with slight penalty
-    onUpdateState({
-      freedomScore: Math.max(0, gameState.freedomScore - 5),
-      orderScore: Math.max(0, gameState.orderScore - 5),
-      currentSceneId: scene.nextSceneIdOnMinigameWin || scene.id
-    });
+    let newFreedom = Math.max(0, gameState.freedomScore - 5);
+    let newOrder = Math.max(0, gameState.orderScore - 5);
+
+    let nextScene = scene.nextSceneIdOnMinigameWin || scene.id;
+    let nextChapterId = gameState.currentChapterId;
+
+    const match = nextScene.match(/^ch([0-9]+)_/);
+    if (match) {
+      const sceneChapterNum = parseInt(match[1], 10);
+      if (sceneChapterNum > gameState.currentChapterId) {
+        nextChapterId = sceneChapterNum;
+      }
+    }
+
+    if (nextChapterId > gameState.currentChapterId) {
+      setIntermissionChapter(gameState.currentChapterId);
+      setPendingNextState({ id: nextChapterId, sceneId: nextScene });
+      onUpdateState({
+        freedomScore: newFreedom,
+        orderScore: newOrder
+      });
+    } else {
+      onUpdateState({
+        freedomScore: newFreedom,
+        orderScore: newOrder,
+        currentSceneId: nextScene
+      });
+    }
   };
 
   const toggleMute = () => {
@@ -362,44 +472,45 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
       <SceneTransition sceneId={scene.id} />
 
       {/* Top Header Overlay */}
-      <div className="z-10 bg-black/50 p-4 md:p-6 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 border-b border-white/10 backdrop-blur-md">
-        <div className="flex items-center gap-3">
+      <div className="z-20 bg-black/75 p-2.5 md:p-4 flex flex-row justify-between items-center gap-2 border-b border-white/10 backdrop-blur-md">
+        <div className="flex items-center gap-2 min-w-0">
           <button
             onClick={onExitToMenu}
             id="back-to-menu-btn"
-            className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 transition text-white shadow-lg shrink-0"
+            className="p-1.5 md:p-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 transition text-white shadow-lg shrink-0"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
           </button>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></div>
-              <div className="text-[10px] uppercase font-mono tracking-[0.2em] text-[#ffdfa0] font-bold drop-shadow-md">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1">
+              <div className="w-1 h-1 rounded-full bg-amber-400 animate-pulse"></div>
+              <div className="text-[8px] md:text-[10px] uppercase font-mono tracking-[0.15em] text-[#ffdfa0] font-bold truncate max-w-[100px] sm:max-w-none">
                 {chapter.title}
               </div>
             </div>
-            <div className="text-base font-extrabold font-sans tracking-tight text-white">{scene.title}</div>
+            <div className="text-xs md:text-sm font-extrabold font-sans tracking-tight text-white truncate max-w-[80px] sm:max-w-[200px] md:max-w-none">{scene.title}</div>
           </div>
         </div>
 
         {/* Live HUD Stats with Cinematic Faction Meters */}
-        <div className="flex flex-1 max-w-2xl justify-end items-center gap-6">
+        <div className="flex items-center gap-2 md:gap-6 min-w-0">
           {/* Freedom Meter */}
-          <div className="flex flex-col gap-1 w-28 md:w-52 relative">
-            <div className="flex justify-between items-end relative">
+          <div className="flex items-center md:flex-col gap-1 md:gap-1 md:w-44 relative">
+            <div className="flex justify-between items-center md:items-end w-full relative gap-1">
               <span className="text-[9px] font-bold uppercase tracking-widest text-[#ffdfa0] drop-shadow-md flex items-center gap-1">
-                🌈 Dziecięca Wolność
+                <span className="md:hidden">🌈</span>
+                <span className="hidden md:inline">🌈 Dziecięca Wolność</span>
               </span>
-              <span className="text-xs font-black italic text-white drop-shadow-md">{gameState.freedomScore}%</span>
+              <span className="text-[10px] md:text-xs font-black italic text-white drop-shadow-md">{gameState.freedomScore}%</span>
               
               {/* Dynamic Score Pop-up Indicator */}
               <AnimatePresence>
                 {freedomPop !== null && (
                   <motion.span
-                    initial={{ opacity: 0, y: 12, scale: 0.8 }}
-                    animate={{ opacity: 1, y: -22, scale: 1.1 }}
+                    initial={{ opacity: 0, y: 8, scale: 0.8 }}
+                    animate={{ opacity: 1, y: -16, scale: 1.1 }}
                     exit={{ opacity: 0 }}
-                    className={`absolute right-0 top-[-25px] text-[10px] font-extrabold font-mono px-2 py-0.5 rounded-full z-30 ${
+                    className={`absolute right-0 top-[-20px] text-[8px] md:text-[10px] font-extrabold font-mono px-1.5 py-0.5 rounded-full z-30 ${
                       freedomPop > 0 ? 'text-emerald-400 bg-emerald-950/90 border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'text-rose-400 bg-rose-950/90 border border-rose-500/40 shadow-[0_0_10px_rgba(244,63,94,0.3)]'
                     }`}
                   >
@@ -408,7 +519,7 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
                 )}
               </AnimatePresence>
             </div>
-            <div className="h-3.5 w-full bg-black/50 rounded-full border border-white/10 overflow-hidden shadow-inner relative">
+            <div className="h-2 w-full bg-black/50 rounded-full border border-white/10 overflow-hidden shadow-inner relative hidden md:block">
               {/* Animated Shimmer Overlay for premium feel */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none z-10 animate-pulse" style={{ backgroundSize: '200% 100%' }} />
               <motion.div
@@ -421,21 +532,22 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
           </div>
 
           {/* Order Meter */}
-          <div className="flex flex-col gap-1 w-28 md:w-52 relative">
-            <div className="flex justify-between items-end relative">
+          <div className="flex items-center md:flex-col gap-1 md:gap-1 md:w-44 relative">
+            <div className="flex justify-between items-center md:items-end w-full relative gap-1">
               <span className="text-[9px] font-bold uppercase tracking-widest text-slate-300 drop-shadow-md flex items-center gap-1">
-                ⚙️ Terapeutyczne Uporządkowanie
+                <span className="md:hidden">⚙️</span>
+                <span className="hidden md:inline">⚙️ Terapeutyczne Uporządkowanie</span>
               </span>
-              <span className="text-xs font-black italic text-white drop-shadow-md">{gameState.orderScore}%</span>
+              <span className="text-[10px] md:text-xs font-black italic text-white drop-shadow-md">{gameState.orderScore}%</span>
               
               {/* Dynamic Score Pop-up Indicator */}
               <AnimatePresence>
                 {orderPop !== null && (
                   <motion.span
-                    initial={{ opacity: 0, y: 12, scale: 0.8 }}
-                    animate={{ opacity: 1, y: -22, scale: 1.1 }}
+                    initial={{ opacity: 0, y: 8, scale: 0.8 }}
+                    animate={{ opacity: 1, y: -16, scale: 1.1 }}
                     exit={{ opacity: 0 }}
-                    className={`absolute right-0 top-[-25px] text-[10px] font-extrabold font-mono px-2 py-0.5 rounded-full z-30 ${
+                    className={`absolute right-0 top-[-20px] text-[8px] md:text-[10px] font-extrabold font-mono px-1.5 py-0.5 rounded-full z-30 ${
                       orderPop > 0 ? 'text-cyan-400 bg-cyan-950/90 border border-cyan-500/40 shadow-[0_0_10px_rgba(34,211,238,0.3)]' : 'text-slate-400 bg-slate-900/90 border border-slate-700/40 shadow-md'
                     }`}
                   >
@@ -444,7 +556,7 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
                 )}
               </AnimatePresence>
             </div>
-            <div className="h-3.5 w-full bg-black/50 rounded-full border border-white/10 overflow-hidden shadow-inner relative">
+            <div className="h-2 w-full bg-black/50 rounded-full border border-white/10 overflow-hidden shadow-inner relative hidden md:block">
               {/* Animated Shimmer Overlay */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none z-10 animate-pulse" style={{ backgroundSize: '200% 100%' }} />
               <motion.div
@@ -456,7 +568,7 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
             </div>
           </div>
 
-          <div className="flex items-center border-l border-white/10 pl-4 shrink-0 gap-3">
+          <div className="flex items-center border-l border-white/10 pl-2 md:pl-4 shrink-0 gap-1.5 md:gap-3">
             {/* Pulsing Smartphone button unlocked starting from Chapter 1 */}
             {gameState.currentChapterId >= 1 && (
               <button
@@ -465,24 +577,26 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
                   setIsPhoneOpen(true);
                 }}
                 id="smartphone-hud-btn"
-                className="relative p-2.5 rounded-full bg-amber-500 hover:bg-amber-400 text-black border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.5)] transition duration-300 animate-pulse font-bold flex items-center gap-1.5 px-4 text-xs font-mono"
+                className="relative p-1.5 md:p-2.5 rounded-full bg-amber-500 hover:bg-amber-400 text-black border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.5)] transition duration-300 animate-pulse font-bold flex items-center gap-1 px-2.5 md:px-4 text-[10px] md:text-xs font-mono shrink-0"
               >
-                <Smartphone className="w-4 h-4" />
-                <span>TELEFON</span>
+                <Smartphone className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <span className="hidden sm:inline">TELEFON</span>
                 {/* Unread dot badge */}
-                <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-500 text-[8px] text-white font-bold items-center justify-center">1</span>
-                </span>
+                {unreadPhoneNotifications > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 text-[8px] text-white font-bold items-center justify-center">{unreadPhoneNotifications}</span>
+                  </span>
+                )}
               </button>
             )}
 
             <button
               onClick={toggleMute}
               id="toggle-audio-btn"
-              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 transition text-white shadow-lg"
+              className="p-1.5 md:p-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 transition text-white shadow-lg shrink-0"
             >
-              {isMuted ? <VolumeX className="w-5 h-5 text-rose-400" /> : <Volume2 className="w-5 h-5 text-emerald-400" />}
+              {isMuted ? <VolumeX className="w-3.5 h-3.5 md:w-5 md:h-5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 md:w-5 md:h-5 text-emerald-400" />}
             </button>
           </div>
         </div>
@@ -557,7 +671,7 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
 
       {/* Bottom Area - Dialogue Box & Choices */}
       {!activeMinigame && (
-        <div className="z-10 bg-gradient-to-t from-black via-black/80 to-transparent p-4 md:p-6 space-y-4 max-w-4xl mx-auto w-full">
+        <div className="z-10 bg-gradient-to-t from-black via-black/85 to-transparent p-2 sm:p-3 md:p-5 space-y-2 md:space-y-3.5 max-w-4xl mx-auto w-full">
           {/* Faction lock details in Chapter 5 */}
           {gameState.playerFactionChoice !== 'NEUTRAL' && showChoices && (
             <div className="text-center text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#ffdfa0] drop-shadow-md">
@@ -570,42 +684,42 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
             <div
               onClick={handleNextDialogue}
               id="dialogue-box"
-              className={`backdrop-blur-xl border rounded-3xl p-6 md:p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] relative cursor-pointer select-none flex flex-col justify-between min-h-[140px] max-w-4xl mx-auto w-full transition-all duration-300 ${
+              className={`backdrop-blur-xl border rounded-xl md:rounded-3xl p-3 md:p-6 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.9)] relative cursor-pointer select-none flex flex-col justify-between min-h-[90px] md:min-h-[120px] max-w-4xl mx-auto w-full transition-all duration-300 ${
                 isTeaserScene
                   ? 'bg-black/90 border-amber-500/40 shadow-[0_0_35px_rgba(245,158,11,0.25)] ring-1 ring-amber-500/20'
                   : 'bg-black/50 border-white/20 hover:border-white/30 hover:bg-black/60'
               }`}
             >
               {/* Speaker Header with neon pulsing element */}
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-2 md:gap-3 mb-1 md:mb-1.5">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: speaker.accentColor || '#f59e0b' }}></span>
                   <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: speaker.accentColor || '#f59e0b' }}></span>
                 </span>
                 <span
-                  className="font-black tracking-[0.2em] text-xs uppercase font-mono"
+                  className="font-black tracking-[0.2em] text-[10px] md:text-xs uppercase font-mono"
                   style={{ color: speaker.accentColor || '#ffffff' }}
                 >
                   {speaker.name}
                 </span>
                 {speaker.role && (
-                  <span className="text-[10px] text-white/50 tracking-wider uppercase font-mono pl-2 border-l border-white/10">{speaker.role}</span>
+                  <span className="text-[9px] md:text-[10px] text-white/50 tracking-wider uppercase font-mono pl-1.5 md:pl-2 border-l border-white/10">{speaker.role}</span>
                 )}
               </div>
 
               {/* Typed text */}
-              <p className="text-white/95 text-base md:text-lg leading-relaxed flex-1 mt-2 mb-4 font-medium italic drop-shadow-sm">
+              <p className="text-white/95 text-xs sm:text-sm md:text-lg leading-relaxed flex-1 mt-0.5 md:mt-1 mb-1 md:mb-2 font-medium italic drop-shadow-sm">
                 "{typedText}"
               </p>
 
               {/* Tap to continue indicator */}
-              <div className="flex justify-end items-center text-[10px] text-white/40 font-mono tracking-[0.2em] uppercase pt-2">
-                Naciśnij dalej <ChevronRight className="w-4 h-4 ml-1 animate-bounce" />
+              <div className="flex justify-end items-center text-[8px] md:text-[10px] text-white/40 font-mono tracking-[0.2em] uppercase pt-0.5 md:pt-1">
+                Naciśnij dalej <ChevronRight className="w-3 h-3 md:w-4 md:h-4 ml-1 animate-bounce" />
               </div>
             </div>
           ) : (
             /* Choice visual array styled with custom border gradient frames */
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4" id="choice-selector">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3" id="choice-selector">
               <AnimatePresence>
                 {scene.minigameType ? (
                   // Custom narrative choices replacing minigames
@@ -615,25 +729,25 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
                       initial={{ opacity: 0, y: 15 }}
                       animate={{ opacity: 1, y: 0 }}
                       onClick={() => handleMinigameWin(scene.minigameType === 'DIAMOND' ? 30 : 15, scene.minigameType === 'DIAMOND' ? 10 : -5)}
-                      className="relative p-[1.5px] rounded-2xl bg-gradient-to-r from-red-500 via-amber-400 to-yellow-500 hover:scale-[1.01] cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300"
+                      className="relative p-[1.5px] rounded-xl bg-gradient-to-r from-red-500 via-amber-400 to-yellow-500 hover:scale-[1.01] cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300"
                     >
-                      <div className="bg-[#1a0f0a]/95 backdrop-blur-xl rounded-[15px] p-5 flex flex-col justify-between h-full min-h-[120px] text-left select-none border border-amber-500/10">
+                      <div className="bg-[#1a0f0a]/95 backdrop-blur-xl rounded-[11px] p-2.5 md:p-4 flex flex-col justify-between h-full min-h-[75px] md:min-h-[100px] text-left select-none border border-amber-500/10">
                         <div>
-                          <div className="flex justify-between items-center mb-1.5">
-                            <span className="text-[9px] uppercase font-mono font-black tracking-[0.15em] text-amber-300">
+                          <div className="flex justify-between items-center mb-0.5">
+                            <span className="text-[8px] md:text-[9px] uppercase font-mono font-black tracking-[0.15em] text-amber-300">
                               🌈 {scene.minigameType === 'DIAMOND' ? 'STARCIE: ŚCIEŻKA SERCA' : 'WYZWANIE: ŚCIEŻKA WOLNOŚCI'}
                             </span>
-                            <span className="text-[8px] bg-amber-500/10 text-amber-300 px-1.5 py-0.5 rounded font-mono font-bold">
+                            <span className="text-[7px] md:text-[8px] bg-amber-500/10 text-amber-300 px-1 py-0.5 rounded font-mono font-bold">
                               Kreatywność
                             </span>
                           </div>
-                          <span className="text-white text-sm md:text-base font-bold tracking-tight block mt-2 leading-snug">
+                          <span className="text-white text-xs md:text-base font-bold tracking-tight block mt-1 leading-snug">
                             {scene.minigameType === 'DIAMOND' 
                               ? 'Uwolnij pełną moc Koloryduszka i radosnego buntu, by przełamać opór terapeutek miłością i śmiechem!'
                               : 'Wykorzystaj nieskrępowaną dziecięcą energię, spontaniczność i radosną wyobraźnię, by rozwiązać ten problem!'}
                           </span>
                         </div>
-                        <div className="flex gap-4 text-[9px] font-mono text-white/50 pt-2 border-t border-white/5 mt-3">
+                        <div className="flex gap-2 md:gap-4 text-[8px] md:text-[9px] font-mono text-white/50 pt-1 border-t border-white/5 mt-1.5 md:mt-2">
                           <span className="text-amber-400 font-extrabold">🌈 {scene.minigameType === 'DIAMOND' ? '+30 Wolność' : '+15 Wolność'}</span>
                           <span className="text-slate-400">{scene.minigameType === 'DIAMOND' ? '+10 Uporządkowanie' : '-5 Uporządkowanie'}</span>
                         </div>
@@ -645,25 +759,25 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
                       initial={{ opacity: 0, y: 15 }}
                       animate={{ opacity: 1, y: 0 }}
                       onClick={() => handleMinigameWin(scene.minigameType === 'DIAMOND' ? 10 : -5, scene.minigameType === 'DIAMOND' ? 30 : 15)}
-                      className="relative p-[1.5px] rounded-2xl bg-gradient-to-r from-slate-500 via-sky-400 to-blue-600 hover:scale-[1.01] cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300"
+                      className="relative p-[1.5px] rounded-xl bg-gradient-to-r from-slate-500 via-sky-400 to-blue-600 hover:scale-[1.01] cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300"
                     >
-                      <div className="bg-[#1a0f0a]/95 backdrop-blur-xl rounded-[15px] p-5 flex flex-col justify-between h-full min-h-[120px] text-left select-none border border-sky-500/10">
+                      <div className="bg-[#1a0f0a]/95 backdrop-blur-xl rounded-[11px] p-2.5 md:p-4 flex flex-col justify-between h-full min-h-[75px] md:min-h-[100px] text-left select-none border border-sky-500/10">
                         <div>
-                          <div className="flex justify-between items-center mb-1.5">
-                            <span className="text-[9px] uppercase font-mono font-black tracking-[0.15em] text-sky-300">
+                          <div className="flex justify-between items-center mb-0.5">
+                            <span className="text-[8px] md:text-[9px] uppercase font-mono font-black tracking-[0.15em] text-sky-300">
                               ⚙️ {scene.minigameType === 'DIAMOND' ? 'STARCIE: ŚCIEŻKA METODYCZNA' : 'WYZWANIE: ŚCIEŻKA UPORZĄDKOWANIA'}
                             </span>
-                            <span className="text-[8px] bg-sky-500/10 text-sky-300 px-1.5 py-0.5 rounded font-mono font-bold">
+                            <span className="text-[7px] md:text-[8px] bg-sky-500/10 text-sky-300 px-1 py-0.5 rounded font-mono font-bold">
                               Rygor i Ład
                             </span>
                           </div>
-                          <span className="text-white text-sm md:text-base font-bold tracking-tight block mt-2 leading-snug">
+                          <span className="text-white text-xs md:text-base font-bold tracking-tight block mt-1 leading-snug">
                             {scene.minigameType === 'DIAMOND'
                               ? 'Wprowadź niezachwiany ład, analizując błędy systemowe i harmonizując emocje za pomocą spokoju!'
                               : 'Rozwiąż to wyzwanie metodycznie, wprowadzając nienaganną strukturę, symetrię i wyciszenie sensoryczne.'}
                           </span>
                         </div>
-                        <div className="flex gap-4 text-[9px] font-mono text-white/50 pt-2 border-t border-white/5 mt-3">
+                        <div className="flex gap-2 md:gap-4 text-[8px] md:text-[9px] font-mono text-white/50 pt-1 border-t border-white/5 mt-1.5 md:mt-2">
                           <span className="text-sky-300 font-extrabold">⚙️ {scene.minigameType === 'DIAMOND' ? '+30 Uporządkowanie' : '+15 Uporządkowanie'}</span>
                           <span className="text-slate-400">{scene.minigameType === 'DIAMOND' ? '+10 Wolność' : '-5 Wolność'}</span>
                         </div>
@@ -681,9 +795,9 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
                     let badgeLabel = 'WYBÓR FABULARNY';
 
                     if (isTeaserScene) {
-                      gradientClasses = 'from-red-600 via-rose-500 to-amber-500 animate-pulse';
-                      labelColor = 'text-amber-400 font-black';
-                      badgeLabel = '🎬 ZAPOWIEDŹ: ODBLOKUJ ROZDZIAŁ';
+                       gradientClasses = 'from-red-600 via-rose-500 to-amber-500 animate-pulse';
+                       labelColor = 'text-amber-400 font-black';
+                       badgeLabel = '🎬 ZAPOWIEDŹ: ODBLOKUJ ROZDZIAŁ';
                     } else if (choice.requiredFaction === 'NAUCZYCIELKI' || choice.impactFreedom > 0) {
                       gradientClasses = 'from-red-500 via-amber-400 to-yellow-500';
                       labelColor = 'text-amber-300';
@@ -704,31 +818,31 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
                       <motion.div
                         key={choice.id}
                         onClick={() => !isLocked && handleChoiceSelect(choice)}
-                        className={`relative p-[1.5px] rounded-2xl bg-gradient-to-r ${gradientClasses} transition-all duration-300 ${
+                        className={`relative p-[1.5px] rounded-xl bg-gradient-to-r ${gradientClasses} transition-all duration-300 ${
                           isLocked ? 'opacity-40 cursor-not-allowed' : 'hover:scale-[1.01] cursor-pointer shadow-lg hover:shadow-2xl'
                         }`}
                       >
-                        <div className="bg-[#1a0f0a]/90 backdrop-blur-xl rounded-[15px] p-4 md:p-5 flex flex-col justify-between h-full min-h-[110px] text-left select-none">
+                        <div className="bg-[#1a0f0a]/90 backdrop-blur-xl rounded-[11px] p-2.5 md:p-4 flex flex-col justify-between h-full min-h-[70px] md:min-h-[95px] text-left select-none">
                           <div>
-                            <div className="flex justify-between items-center mb-1">
-                              <span className={`text-[9px] uppercase font-bold tracking-[0.15em] ${labelColor}`}>
+                            <div className="flex justify-between items-center mb-0.5">
+                              <span className={`text-[8px] md:text-[9px] uppercase font-bold tracking-[0.15em] ${labelColor}`}>
                                 {badgeLabel}
                               </span>
                               {choice.requiredFaction && (
-                                <span className="text-[8px] bg-white/10 px-1.5 py-0.5 rounded font-mono text-white/60">
+                                <span className="text-[7px] md:text-[8px] bg-white/10 px-1 py-0.5 rounded font-mono text-white/60">
                                   Wymagany Sojusz
                                 </span>
                               )}
                             </div>
 
-                            <span className="text-white text-sm md:text-base font-semibold tracking-tight block mt-1.5 leading-snug">
+                            <span className="text-white text-xs md:text-sm font-semibold tracking-tight block mt-0.5 md:mt-1 leading-snug">
                               {choice.text}
                             </span>
                           </div>
 
                           {/* Scores preview */}
                           {!isLocked && (choice.impactFreedom !== 0 || choice.impactOrder !== 0) && (
-                            <div className="flex gap-4 text-[9px] font-mono text-white/50 pt-2 border-t border-white/5 mt-2.5">
+                            <div className="flex gap-2 md:gap-4 text-[8px] md:text-[9px] font-mono text-white/50 pt-1 border-t border-white/5 mt-1 md:mt-2">
                               {choice.impactFreedom !== 0 && (
                                 <span className={choice.impactFreedom > 0 ? 'text-amber-400 font-bold' : 'text-slate-400'}>
                                   🌈 {choice.impactFreedom > 0 ? `+${choice.impactFreedom}` : choice.impactFreedom} Wolność
@@ -759,6 +873,26 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
             isOpen={isPhoneOpen}
             onClose={() => setIsPhoneOpen(false)}
             gameState={gameState}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Home Intermission component */}
+      <AnimatePresence>
+        {intermissionChapter !== null && pendingNextState && (
+          <HomeIntermission
+            completedChapterId={intermissionChapter}
+            onFinishIntermission={() => {
+              onUpdateState({
+                currentChapterId: pendingNextState.id,
+                currentSceneId: pendingNextState.sceneId
+              });
+              setIntermissionChapter(null);
+              setPendingNextState(null);
+            }}
+            freedomScore={gameState.freedomScore}
+            orderScore={gameState.orderScore}
+            playerName={playerProfile.username}
           />
         )}
       </AnimatePresence>
