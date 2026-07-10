@@ -5,8 +5,10 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Coffee, Moon, MessageCircle, Heart, ShieldCheck, Sparkles, AlertCircle } from 'lucide-react';
+import { Coffee, Moon, MessageCircle, Heart, ShieldCheck, Sparkles, AlertCircle, Smartphone } from 'lucide-react';
 import { sound } from './SoundManager';
+import { GameState, PlayerProfile } from '../types';
+import PhoneModal from './PhoneModal';
 
 interface HomeIntermissionProps {
   completedChapterId: number;
@@ -14,6 +16,8 @@ interface HomeIntermissionProps {
   freedomScore: number;
   orderScore: number;
   playerName?: string;
+  gameState: GameState;
+  playerProfile: PlayerProfile;
 }
 
 interface IntermissionTopic {
@@ -29,10 +33,60 @@ export default function HomeIntermission({
   onFinishIntermission,
   freedomScore,
   orderScore,
-  playerName = 'Asystentka'
+  playerName = 'Asystentka',
+  gameState,
+  playerProfile
 }: HomeIntermissionProps) {
   const [selectedTopic, setSelectedTopic] = useState<IntermissionTopic | null>(null);
   const [discussedTopicIds, setDiscussedTopicIds] = useState<string[]>([]);
+  const [isPhoneOpen, setIsPhoneOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Helper to compute unread count on the fly
+  const calculateUnread = () => {
+    let count = 0;
+    if (gameState.currentChapterId >= 21) {
+      const totalMsgs = 3;
+      const readCountStr = localStorage.getItem('phone_read_chat_anonim');
+      if (!readCountStr) {
+        count++;
+      } else {
+        const readCount = parseInt(readCountStr, 10);
+        if (totalMsgs > readCount) {
+          count++;
+        }
+      }
+    }
+
+    let totalCalls = 2;
+    if (gameState.currentChapterId >= 6) totalCalls++;
+    if (gameState.currentChapterId >= 11) totalCalls++;
+    if (gameState.currentChapterId >= 12) totalCalls++;
+    if (gameState.currentChapterId >= 15) totalCalls++;
+    if (gameState.currentChapterId >= 21) totalCalls += 3;
+
+    const readCallsStr = localStorage.getItem('phone_read_calls_count');
+    if (!readCallsStr) {
+      count += (totalCalls > 0 ? 1 : 0);
+    } else {
+      const readCalls = parseInt(readCallsStr, 10);
+      if (totalCalls > readCalls) {
+        count++;
+      }
+    }
+    return count;
+  };
+
+  React.useEffect(() => {
+    setUnreadCount(calculateUnread());
+    
+    const handleStorageChange = () => {
+      setUnreadCount(calculateUnread());
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [gameState.currentChapterId]);
 
   // Sound triggers
   const handleSelectTopic = (topic: IntermissionTopic) => {
@@ -184,7 +238,7 @@ export default function HomeIntermission({
       <div className="absolute inset-0 bg-radial-gradient from-amber-500/10 via-transparent to-black/80 pointer-events-none z-10" />
 
       {/* Top Header */}
-      <div className="relative z-20 px-6 pt-5 pb-3 bg-gradient-to-b from-black/80 to-transparent flex justify-between items-center shrink-0 border-b border-amber-500/10">
+      <div className="relative z-20 px-6 pt-5 pb-3 bg-gradient-to-b from-black/80 to-transparent flex flex-col sm:flex-row gap-3 justify-between items-center shrink-0 border-b border-amber-500/10">
         <div className="flex items-center gap-2.5">
           <Moon className="w-5 h-5 text-amber-400 animate-pulse" />
           <div>
@@ -192,13 +246,32 @@ export default function HomeIntermission({
             <p className="text-[10px] text-slate-300">Rozdział {completedChapterId} zakończony • Czas na rozmowę</p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <div className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-mono text-emerald-400">
-            ☀️ Wolność: {freedomScore}%
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1.5">
+            <div className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-mono text-emerald-400">
+              ☀️ Wolność: {freedomScore}%
+            </div>
+            <div className="px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[9px] font-mono text-blue-400">
+              🔷 Ład: {orderScore}%
+            </div>
           </div>
-          <div className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-mono text-blue-400">
-            🔷 Ład: {orderScore}%
-          </div>
+
+          <button
+            onClick={() => {
+              sound.playSwipe();
+              setIsPhoneOpen(true);
+            }}
+            className="relative px-3 py-1 rounded-full bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-[9px] font-bold tracking-wider uppercase flex items-center gap-1.5 transition active:scale-95 shadow-md shadow-amber-950/20 text-amber-300"
+          >
+            <Smartphone className="w-3.5 h-3.5" />
+            <span>Telefon</span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -327,6 +400,18 @@ export default function HomeIntermission({
           💡 <strong className="text-amber-400">Rada od Tomka:</strong> "{getTomekAdvice()}"
         </p>
       </div>
+
+      {/* Phone Modal */}
+      <AnimatePresence>
+        {isPhoneOpen && (
+          <PhoneModal
+            isOpen={isPhoneOpen}
+            onClose={() => setIsPhoneOpen(false)}
+            gameState={gameState}
+            playerProfile={playerProfile}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

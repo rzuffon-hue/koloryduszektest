@@ -3,29 +3,50 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, MessageSquare, Users, Image as ImageIcon, FileText, 
   Smartphone, Send, Sparkles, CheckCircle2,
-  User, PhoneCall, PhoneMissed, BookOpen, Lock
+  User, PhoneCall, PhoneMissed, BookOpen, Lock, Gamepad2, Trophy, Hash, Award
 } from 'lucide-react';
-import { GameState } from '../types';
+import { GameState, PlayerProfile } from '../types';
 import { CHARACTERS } from '../data/characters';
 import { sound } from './SoundManager';
+import DiamondAttack from './DiamondAttack';
+import PhoneSnake from './PhoneSnake';
 
 interface PhoneModalProps {
   isOpen: boolean;
   onClose: () => void;
   gameState: GameState;
+  playerProfile: PlayerProfile;
 }
 
-type PhoneTab = 'chat' | 'contacts' | 'calls' | 'gallery' | 'notes';
+type PhoneTab = 'chat' | 'contacts' | 'calls' | 'gallery' | 'notes' | 'game';
 
-export default function PhoneModal({ isOpen, onClose, gameState }: PhoneModalProps) {
+export default function PhoneModal({ isOpen, onClose, gameState, playerProfile }: PhoneModalProps) {
   const [activeTab, setActiveTab] = useState<PhoneTab>('chat');
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const [showMinigame, setShowMinigame] = useState(false);
+  const [showSnake, setShowSnake] = useState(false);
+  const [snakeStats, setSnakeStats] = useState({ highScore: 0, lastScore: 0, gamesPlayed: 0 });
+
+  // Load snake stats
+  useEffect(() => {
+    if (playerProfile?.username) {
+      const statsKey = `snake_stats_${playerProfile.username}`;
+      const saved = localStorage.getItem(statsKey);
+      if (saved) {
+        try {
+          setSnakeStats(JSON.parse(saved));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, [playerProfile?.username, showSnake]);
 
   if (!isOpen) return null;
 
@@ -678,6 +699,81 @@ export default function PhoneModal({ isOpen, onClose, gameState }: PhoneModalPro
                     </div>
                   </div>
                 )}
+
+                {activeTab === 'game' && (
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-black tracking-widest uppercase text-white/40 font-mono mb-1 flex items-center gap-1.5">
+                      <Gamepad2 className="w-3.5 h-3.5 text-amber-400 animate-bounce" /> Gry Telefoniczne
+                    </h3>
+                    
+                    <div className="space-y-3">
+                      {/* GAME 1: MATCH-3 */}
+                      <div className="bg-gradient-to-br from-violet-950/45 to-fuchsia-950/40 rounded-2xl p-4 border border-violet-500/20 relative overflow-hidden shadow-lg transition-all duration-300 hover:border-violet-500/40">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-violet-500/5 rounded-full blur-xl pointer-events-none" />
+                        <div className="flex justify-between items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                              🔴 Diamenty: Trening
+                            </h4>
+                            <p className="text-[10px] text-violet-200/60 mt-1 leading-relaxed">
+                              Match-3 bez stresu i limitów czasowych. Ćwicz łączenie kryształów i poprawiaj rekord.
+                            </p>
+                            <div className="mt-2.5 inline-flex items-center gap-1 text-[9px] font-mono text-yellow-400 bg-black/45 px-2 py-0.5 rounded-lg border border-yellow-500/10">
+                              <Trophy className="w-2.5 h-2.5" /> Rekord: {playerProfile?.stats?.trainingHighScore || 0} pkt
+                            </div>
+                          </div>
+                          
+                          <button
+                            onClick={() => {
+                              sound.playSwipe();
+                              setShowMinigame(true);
+                            }}
+                            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black text-[10px] font-black tracking-widest uppercase shadow-md transition duration-200 active:scale-95 shrink-0 font-bold"
+                          >
+                            Graj
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* GAME 2: SNAKE */}
+                      <div className="bg-gradient-to-br from-amber-50 to-orange-100 rounded-2xl p-4 border border-amber-400/30 relative overflow-hidden shadow-lg transition-all duration-300 hover:border-amber-400/50">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-amber-500/10 rounded-full blur-xl pointer-events-none" />
+                        <div className="flex justify-between items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-xs font-black text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                              🧒 Przedszkolny Wężyk BAJA
+                            </h4>
+                            <p className="text-[10px] text-amber-900/70 mt-1 leading-relaxed">
+                              Poprowadź wesołą grupę dzieci przez zakamarki przedszkola BAJA! Dołączaj kolejne maluchy i uważaj na przeszkody!
+                            </p>
+                            
+                            <div className="mt-2.5 flex flex-wrap gap-1.5 font-mono text-[8px] text-amber-900/85">
+                              <span className="bg-white/70 px-2 py-0.5 rounded-lg border border-amber-500/10 flex items-center gap-1 shadow-sm">
+                                <Trophy className="w-2.5 h-2.5 text-amber-500" /> Rekord: {snakeStats.highScore || 0}
+                              </span>
+                              <span className="bg-white/70 px-2 py-0.5 rounded-lg border border-amber-500/10 flex items-center gap-1 shadow-sm">
+                                <Award className="w-2.5 h-2.5 text-orange-500" /> Ostatni: {snakeStats.lastScore || 0}
+                              </span>
+                              <span className="bg-white/70 px-2 py-0.5 rounded-lg border border-amber-500/10 flex items-center gap-1 shadow-sm">
+                                <Hash className="w-2.5 h-2.5 text-amber-600" /> Gry: {snakeStats.gamesPlayed || 0}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <button
+                            onClick={() => {
+                              sound.playSwipe();
+                              setShowSnake(true);
+                            }}
+                            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-[10px] font-black tracking-widest uppercase shadow-md transition duration-200 active:scale-95 shrink-0"
+                          >
+                            Graj
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -742,8 +838,70 @@ export default function PhoneModal({ isOpen, onClose, gameState }: PhoneModalPro
             <FileText className="w-4 h-4" />
             <span className="text-[8px] font-bold tracking-wider font-mono">Zapiski</span>
           </button>
+
+          <button 
+            onClick={() => handleTabChange('game')}
+            className={`flex flex-col items-center gap-1 transition ${activeTab === 'game' ? 'text-amber-400 scale-105' : 'text-white/50 hover:text-white/80'}`}
+          >
+            <Gamepad2 className="w-4 h-4" />
+            <span className="text-[8px] font-bold tracking-wider font-mono">Gra</span>
+          </button>
         </div>
       </motion.div>
+
+      {/* Game Overlay */}
+      <AnimatePresence>
+        {showMinigame && (
+          <DiamondAttack
+            playerProfile={playerProfile}
+            opponentId="lysy_kierownik"
+            opponentLevel={1}
+            isTraining={true}
+            onClose={(rewards) => {
+              sound.playClick();
+              setShowMinigame(false);
+              if (rewards && rewards.trainingScore !== undefined) {
+                const currentHighScore = playerProfile.stats.trainingHighScore || 0;
+                if (rewards.trainingScore > currentHighScore) {
+                  // Update playerProfile mutated object
+                  playerProfile.stats.trainingHighScore = rewards.trainingScore;
+                  
+                  // Persist to local storage so other views pick it up on refresh or next load
+                  localStorage.setItem('koloryduszek_current_profile_v2', JSON.stringify(playerProfile));
+                  
+                  // Also update in profiles list
+                  const savedProfiles = localStorage.getItem('koloryduszek_profiles_v2');
+                  if (savedProfiles) {
+                    try {
+                      const list = JSON.parse(savedProfiles);
+                      const idx = list.findIndex((p: any) => p.username === playerProfile.username);
+                      if (idx !== -1) {
+                        list[idx].stats.trainingHighScore = rewards.trainingScore;
+                        localStorage.setItem('koloryduszek_profiles_v2', JSON.stringify(list));
+                      }
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }
+                  
+                  // Trigger a custom event or window storage dispatch to notify parent components of state changes
+                  window.dispatchEvent(new Event('storage'));
+                }
+              }
+            }}
+          />
+        )}
+
+        {showSnake && (
+          <PhoneSnake
+            username={playerProfile.username}
+            onClose={() => {
+              sound.playClick();
+              setShowSnake(false);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

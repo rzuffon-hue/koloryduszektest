@@ -227,6 +227,23 @@ export default function MainMenu({
                   </div>
                 </div>
 
+                {/* Drugi plaster - Nowe gry w telefonie przyklejony pod spodem z przeciwnym skosem */}
+                <div className="relative z-20 mt-2 rotate-[2deg] hover:rotate-0 transition-all duration-300 ease-out max-w-xs sm:max-w-sm mx-auto drop-shadow-[0_8px_16px_rgba(245,158,11,0.35)] select-none">
+                  {/* Jagged / tape edges */}
+                  <div className="absolute -left-1.5 top-0 bottom-0 w-2 bg-[#d97706]/30" style={{ clipPath: 'polygon(100% 0, 0 25%, 100% 50%, 0 75%, 100% 100%)' }} />
+                  <div className="absolute -right-1.5 top-0 bottom-0 w-2 bg-[#d97706]/30" style={{ clipPath: 'polygon(0 0, 100% 25%, 0 50%, 100% 75%, 0 100%)' }} />
+                  
+                  <div className="px-4 py-1.5 bg-gradient-to-r from-amber-600/95 via-orange-500/90 to-yellow-600/95 border-y border-amber-400/50 backdrop-blur-sm shadow-inner flex flex-col items-center justify-center">
+                    <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono tracking-widest text-yellow-100 uppercase font-black drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">
+                      <Smartphone className="w-3.5 h-3.5 text-yellow-300 animate-pulse" />
+                      <span>Nowe Gry w Telefonie!</span>
+                    </div>
+                    <p className="text-[9px] sm:text-[10px] text-amber-50 font-bold mt-0.5 uppercase font-mono tracking-wider drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
+                      Sprawdź Wężyka BAJA i zrelaksuj się!
+                    </p>
+                  </div>
+                </div>
+
                 {isInstalled && (
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-mono font-bold tracking-wider uppercase mt-3 animate-pulse">
                     <Smartphone className="w-3.5 h-3.5" /> Aplikacja PWA aktywna

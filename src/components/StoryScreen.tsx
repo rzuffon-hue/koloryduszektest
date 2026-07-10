@@ -873,6 +873,7 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
             isOpen={isPhoneOpen}
             onClose={() => setIsPhoneOpen(false)}
             gameState={gameState}
+            playerProfile={playerProfile}
           />
         )}
       </AnimatePresence>
@@ -893,6 +894,8 @@ export default function StoryScreen({ gameState, onUpdateState, onExitToMenu, pl
             freedomScore={gameState.freedomScore}
             orderScore={gameState.orderScore}
             playerName={playerProfile.username}
+            gameState={gameState}
+            playerProfile={playerProfile}
           />
         )}
       </AnimatePresence>
